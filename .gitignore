@@ -31,3 +31,20 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Ignore test files (generated for debugging)
+test-files/
+
+# Ignore Maven target folder (build artifacts)
+target/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore log files
+*.log
+
+# Ignore IDE/editor config files (optional)
+.idea/
+.vscode/
