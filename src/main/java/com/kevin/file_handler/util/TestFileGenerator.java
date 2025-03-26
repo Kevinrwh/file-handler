@@ -4,6 +4,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Random;
 import java.util.List;
 import java.util.Arrays;
@@ -23,24 +25,44 @@ public class TestFileGenerator {
 
     public static void main(String[] args) {
         ensureTestDirectoryExists();
-        generateACHReturnFile(DIRECTORY + "ach_returns.txt", 5);
+        generateACHReturnFile(DIRECTORY + "ach_returns.txt", 1, 10);
         generateDirectDepositFile(DIRECTORY + "direct_deposits.txt", 5);
     }
 
     /**
-     * Generates an ACH Return file with multiple records
-     * @param filename
-     * @param recordCount
+     * Generates an ACH Return file with:
+     * - A header record starting with 0
+     * - 1 to 10 detail records containing name, amount, and date
+     * - A trainer record summing all the amounts
+     * @param filename      The path where the file will be written
+     * @param minRecords    Minimum number of return records to include
+     * @param maxRecords    Maximum number of return records to include
      */
-    public static void generateACHReturnFile(String filename, int recordCount) {
+    public static void generateACHReturnFile(String filename, int minRecords, int maxRecords) {
         try (FileWriter writer = new FileWriter(Paths.get(filename).toFile())) {
-            writer.write("0\n"); // File type indicator (ACH Return)
+            
+            // Header record
+            String header = String.format ("%-2s%-6s%-72s", "01", "ACHRET", "");
+            writer.write(header + "\n");
+
+            int recordCount = minRecords + RANDOM.nextInt(maxRecords - minRecords+1);
+            String date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+            int totalCents = 0;
+
             for(int i = 0; i < recordCount; i++) {
-                double amount = 50 + (RANDOM.nextDouble() * 450);
-                String name = getRandomName();
-                writer.write(String.format("%.2f,%s%n", amount, name));
+                String name = String.format("%-15s", getRandomName());
+                int amountCents = 5000 + RANDOM.nextInt(45000); // 50.00 to 499.99
+                totalCents += amountCents;
+                String amount = String.format("%09d", amountCents);
+                String detail = String.format("%-2s%s%s%s%-46s", "02", name, amount, date, "");
+                writer.write(detail + "\n");
             }
-            System.out.println("Generated ACH Return file: " + filename);
+
+            // Trailer
+            String trailer = String.format("%2s%-5s%09d%-64s", "99", "TOTAL", totalCents, "");
+            writer.write(trailer + "\n");
+
+            System.out.println("Mainframe-style ACH return file generated: " + filename);
         } catch (IOException e) {
             System.err.println("Error generating ACH Return file: " + e.getMessage());
         }
